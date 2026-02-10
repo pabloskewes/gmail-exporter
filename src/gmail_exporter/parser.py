@@ -59,4 +59,5 @@ def extract_message(raw: RawMessage) -> Message:
         subject=raw.headers.subject,
         body_html=body_html,
         body_plain=body_plain,
+        attachments=raw.attachments,
     )

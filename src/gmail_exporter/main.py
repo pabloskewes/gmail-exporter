@@ -8,6 +8,7 @@ from pathlib import Path
 
 import typer
 
+from gmail_exporter.attachment_handler import save_attachments
 from gmail_exporter.auth import get_gmail_service
 from gmail_exporter.gmail_client import get_thread_messages
 from gmail_exporter.markdown_writer import save_thread, thread_to_markdown
@@ -94,8 +95,23 @@ def main(
     for i, m in enumerate(parsed, 1):
         print(f"✓ Processing message {i}/{len(parsed)} from {m.from_addr}")
 
+    # Download attachments and build CID mapping
+    print("✓ Downloading attachments...")
+    cid_mapping: dict[str, str] = {}
+    for raw_msg, parsed_msg in zip(messages, parsed):
+        if parsed_msg.attachments:
+            msg_mapping = save_attachments(
+                service,
+                raw_msg.id,
+                parsed_msg.attachments,
+                output_dir,
+                thread_id,
+            )
+            cid_mapping.update(msg_mapping)
+            print(f"  → Downloaded {len(parsed_msg.attachments)} attachment(s)")
+
     subject = parsed[0].subject if parsed else "Thread Export"
-    md_content = thread_to_markdown(parsed, subject)
+    md_content = thread_to_markdown(parsed, subject, cid_mapping)
     out_path = save_thread(md_content, subject, output_dir)
     print(f"✓ Exported to: {out_path}")
 

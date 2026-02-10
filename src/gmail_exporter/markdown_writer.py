@@ -20,11 +20,31 @@ def _html_to_markdown(html: str) -> str:
     )
 
 
-def thread_to_markdown(messages: list[Message], subject: str) -> str:
+def _replace_cids(
+    html: str, cid_mapping: dict[str, str]
+) -> str:
+    """Replace cid: references with local file paths."""
+    if not html or not cid_mapping:
+        return html
+
+    # Pattern: src="cid:ii_miid2twg0" or similar
+    def replacer(match: re.Match) -> str:
+        cid = match.group(1)
+        if cid in cid_mapping:
+            return f'src="{cid_mapping[cid]}"'
+        return match.group(0)  # Keep original if not found
+
+    return re.sub(r'src="cid:([^"]+)"', replacer, html)
+
+
+def thread_to_markdown(
+    messages: list[Message], subject: str, cid_mapping: dict[str, str] | None = None
+) -> str:
     """Build a single Markdown document from cleaned messages."""
     if not messages:
         return f"# {subject}\n\n(No messages)\n"
 
+    cid_mapping = cid_mapping or {}
     lines = [f"# {subject}", "", "---", ""]
 
     for m in messages:
@@ -35,7 +55,13 @@ def thread_to_markdown(messages: list[Message], subject: str) -> str:
                 "",
             ]
         )
-        content = _html_to_markdown(m.body_html) if m.body_html else m.body_plain
+
+        # Replace CIDs in HTML before converting to markdown
+        html_content = m.body_html
+        if html_content and cid_mapping:
+            html_content = _replace_cids(html_content, cid_mapping)
+
+        content = _html_to_markdown(html_content) if html_content else m.body_plain
         if content.strip():
             lines.append(content.strip())
         lines.append("")

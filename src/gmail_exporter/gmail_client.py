@@ -5,7 +5,7 @@ from typing import Any
 
 from googleapiclient.discovery import Resource
 
-from gmail_exporter.types import Headers, RawMessage
+from gmail_exporter.types import Attachment, Headers, RawMessage
 
 
 def _decode(data: str) -> str:
@@ -48,6 +48,48 @@ def get_message_parts(payload: dict[str, Any]) -> dict[str, str | None]:
     return out
 
 
+def _extract_attachments(payload: dict[str, Any]) -> list[Attachment]:
+    """Extract inline attachments (images) with Content-ID from payload."""
+    attachments: list[Attachment] = []
+
+    def _walk_parts(part: dict[str, Any]) -> None:
+        # Check if this part has an attachment
+        body = part.get("body", {})
+        attachment_id = body.get("attachmentId")
+        mime_type = part.get("mimeType", "")
+        filename = part.get("filename", "")
+
+        # Look for Content-ID header (indicates inline attachment)
+        content_id = None
+        if "headers" in part:
+            for header in part["headers"]:
+                if header.get("name", "").lower() == "content-id":
+                    # Content-ID comes as "<ii_miid2twg0>", strip angle brackets
+                    cid = header.get("value", "")
+                    content_id = cid.strip("<>")
+                    break
+
+        # If has attachment_id and content_id, it's an inline image
+        if attachment_id and content_id:
+            attachments.append(
+                Attachment(
+                    content_id=content_id,
+                    attachment_id=attachment_id,
+                    filename=filename or "attachment",
+                    mime_type=mime_type,
+                    size=body.get("size", 0),
+                )
+            )
+
+        # Recurse into nested parts
+        if "parts" in part:
+            for subpart in part["parts"]:
+                _walk_parts(subpart)
+
+    _walk_parts(payload)
+    return attachments
+
+
 def get_thread_messages(service: Resource, thread_id: str) -> list[RawMessage]:
     """Fetch thread and return list of Message per message."""
     thread = (
@@ -63,6 +105,7 @@ def get_thread_messages(service: Resource, thread_id: str) -> list[RawMessage]:
         payload = msg.get("payload", {})
         headers_list = payload.get("headers", [])
         parts = get_message_parts(payload)
+        attachments = _extract_attachments(payload)
         result.append(
             RawMessage(
                 id=msg.get("id", ""),
@@ -73,6 +116,7 @@ def get_thread_messages(service: Resource, thread_id: str) -> list[RawMessage]:
                 ),
                 html=parts.get("text/html"),
                 plain=parts.get("text/plain"),
+                attachments=attachments,
             )
         )
     return result
