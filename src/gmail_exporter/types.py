@@ -11,7 +11,7 @@ class Headers:
 
 
 @dataclass
-class Message:
+class RawMessage:
     id: str
     headers: Headers
     html: str | None
