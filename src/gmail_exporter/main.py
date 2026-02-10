@@ -95,9 +95,10 @@ def main(
     for i, m in enumerate(parsed, 1):
         print(f"✓ Processing message {i}/{len(parsed)} from {m.from_addr}")
 
-    # Download attachments and build CID mapping
+    # Download attachments and build CID mapping (with deduplication)
     print("✓ Downloading attachments...")
     cid_mapping: dict[str, str] = {}
+    dedup_cache: dict[str, str] = {}  # Shared cache for deduplication
     for raw_msg, parsed_msg in zip(messages, parsed):
         if parsed_msg.attachments:
             msg_mapping = save_attachments(
@@ -106,9 +107,13 @@ def main(
                 parsed_msg.attachments,
                 output_dir,
                 thread_id,
+                dedup_cache,
             )
             cid_mapping.update(msg_mapping)
-            print(f"  → Downloaded {len(parsed_msg.attachments)} attachment(s)")
+            print(f"  → Processed {len(parsed_msg.attachments)} attachment(s)")
+
+    if dedup_cache:
+        print(f"  → Saved {len(dedup_cache)} unique image(s)")
 
     subject = parsed[0].subject if parsed else "Thread Export"
     md_content = thread_to_markdown(parsed, subject, cid_mapping)

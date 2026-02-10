@@ -61,3 +61,4 @@ On first run, a browser window will open for OAuth authorization. The token is s
 - Default output directory: `./exports/`
 - Each message shows From and Date; quoted replies (`.gmail_quote`) are stripped
 - Code blocks are preserved as fenced Markdown (triple backticks)
+- **Inline images** are downloaded to `./exports/images/` and referenced with relative paths
