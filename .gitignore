@@ -5,6 +5,14 @@ venv/
 # secrets
 .env
 credentials.json
+token.json
 
 # notes
 /notes/
+
+# exports
+exports/
+
+# cache
+.cache/
+__pycache__/
