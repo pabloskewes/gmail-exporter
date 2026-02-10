@@ -6,15 +6,22 @@ from gmail_exporter.types import Message, RawMessage
 
 
 def clean_html_content(html: str) -> str:
-    """Remove Gmail quote blocks (.gmail_quote). Preserve pre/code."""
+    """Remove full thread history (last blockquote in each gmail_quote div). Preserve contextual quotes."""
     if not html or not html.strip():
         return ""
     soup = BeautifulSoup(html, "html.parser")
-    for quote in soup.find_all(class_="gmail_quote"):
-        quote.decompose()
-    for elem in soup.find_all("blockquote"):
-        if "gmail_quote" in (elem.get("class") or []):
-            elem.decompose()
+    
+    # For each gmail_quote div, remove only the last blockquote (full history)
+    for quote_div in soup.find_all("div", class_="gmail_quote"):
+        blockquotes = quote_div.find_all("blockquote", class_="gmail_quote", recursive=False)
+        if blockquotes:
+            # Remove the last one (full thread history)
+            blockquotes[-1].decompose()
+        
+        # Also remove attribution lines ("El jue, ... escribió:")
+        for attr_div in quote_div.find_all("div", class_="gmail_attr"):
+            attr_div.decompose()
+    
     return str(soup)
 
 

@@ -4,11 +4,30 @@ from gmail_exporter.parser import clean_html_content, extract_message
 from gmail_exporter.types import Headers, RawMessage
 
 
-def test_clean_html_removes_gmail_quote():
-    html = '<p>New</p><div class="gmail_quote"><p>Quoted</p></div>'
+def test_clean_html_removes_last_blockquote():
+    """Test that last blockquote (full history) is removed."""
+    html = '''<p>New message</p>
+    <div class="gmail_quote">
+        <blockquote class="gmail_quote"><p>Contextual quote</p></blockquote>
+        <div>Response to quote</div>
+        <blockquote class="gmail_quote"><p>Full thread history</p></blockquote>
+    </div>'''
     out = clean_html_content(html)
-    assert "New" in out
-    assert "Quoted" not in out
+    assert "New message" in out
+    assert "Contextual quote" in out  # Preserved
+    assert "Response to quote" in out  # Preserved
+    assert "Full thread history" not in out  # Removed (last blockquote)
+
+
+def test_clean_html_removes_attribution():
+    """Test that gmail_attr divs are removed."""
+    html = '''<div class="gmail_quote">
+        <div class="gmail_attr">On Mon, Bob wrote:</div>
+        <blockquote class="gmail_quote"><p>History</p></blockquote>
+    </div>'''
+    out = clean_html_content(html)
+    assert "On Mon, Bob wrote:" not in out
+    assert "History" not in out  # Last blockquote removed
 
 
 def test_clean_html_preserves_content():
