@@ -8,6 +8,7 @@ from pathlib import Path
 import typer
 
 from gmail_exporter.auth import get_gmail_service
+from gmail_exporter.gmail_client import get_thread_messages
 
 app = typer.Typer()
 
@@ -37,9 +38,22 @@ def main(
         print(f"Error: {e}", file=sys.stderr)
         raise typer.Exit(1)
 
-    # TODO: fetch, parse, markdown, save (gmail_client, parser, markdown_writer)
-    print(f"thread_id={thread_id}, output_dir={output_dir}")
-    _ = service  # suppress unused
+    try:
+        print(f"✓ Fetching thread: {thread_id}")
+        messages = get_thread_messages(service, thread_id)
+    except Exception as e:
+        print(f"Error fetching thread: {e}", file=sys.stderr)
+        raise typer.Exit(1)
+
+    if not messages:
+        print("No messages in thread.", file=sys.stderr)
+        raise typer.Exit(1)
+
+    print(f"✓ Found {len(messages)} messages")
+    # TODO: parse, markdown, save (parser, markdown_writer)
+    for i, m in enumerate(messages, 1):
+        from_addr = m.get("headers", {}).get("From", "?")
+        print(f"  {i}. {from_addr}")
 
 
 if __name__ == "__main__":
