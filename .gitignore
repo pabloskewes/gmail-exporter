@@ -1,0 +1,10 @@
+# virtual environment
+venv/
+.venv/
+
+# secrets
+.env
+credentials.json
+
+# notes
+/notes/
