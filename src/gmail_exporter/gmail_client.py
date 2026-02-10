@@ -53,7 +53,6 @@ def _extract_attachments(payload: dict[str, Any]) -> list[Attachment]:
     attachments: list[Attachment] = []
 
     def _walk_parts(part: dict[str, Any]) -> None:
-        # Check if this part has an attachment
         body = part.get("body", {})
         attachment_id = body.get("attachmentId")
         mime_type = part.get("mimeType", "")
@@ -80,8 +79,6 @@ def _extract_attachments(payload: dict[str, Any]) -> list[Attachment]:
                     size=body.get("size", 0),
                 )
             )
-
-        # Recurse into nested parts
         if "parts" in part:
             for subpart in part["parts"]:
                 _walk_parts(subpart)

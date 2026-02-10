@@ -98,7 +98,7 @@ def main(
     # Download attachments and build CID mapping (with deduplication)
     print("✓ Downloading attachments...")
     cid_mapping: dict[str, str] = {}
-    dedup_cache: dict[str, str] = {}  # Shared cache for deduplication
+    dedup_cache: dict[str, str] = {}
     for raw_msg, parsed_msg in zip(messages, parsed):
         if parsed_msg.attachments:
             msg_mapping = save_attachments(

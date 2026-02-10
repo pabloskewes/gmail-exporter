@@ -15,7 +15,6 @@ def clean_html_content(html: str) -> str:
     for quote_div in soup.find_all("div", class_="gmail_quote"):
         blockquotes = quote_div.find_all("blockquote", class_="gmail_quote", recursive=False)
         if blockquotes:
-            # Remove the last one (full thread history)
             blockquotes[-1].decompose()
         
         # Also remove attribution lines ("El jue, ... escribió:")

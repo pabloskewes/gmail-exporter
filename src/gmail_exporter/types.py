@@ -12,8 +12,6 @@ class Headers:
 
 @dataclass
 class Attachment:
-    """Represents an inline image or attachment."""
-
     content_id: str  # CID without angle brackets (e.g., "ii_miid2twg0")
     attachment_id: str  # Gmail API attachment ID for downloading
     filename: str  # Original filename
@@ -32,8 +30,6 @@ class RawMessage:
 
 @dataclass
 class Message:
-    """Cleaned message, ready for Markdown export."""
-
     from_addr: str
     date: str
     subject: str
