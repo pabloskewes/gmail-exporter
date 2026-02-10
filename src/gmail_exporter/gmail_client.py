@@ -5,6 +5,8 @@ from typing import Any
 
 from googleapiclient.discovery import Resource
 
+from gmail_exporter.types import Headers, Message
+
 
 def _decode(data: str) -> str:
     """Decode base64url body from Gmail API."""
@@ -46,8 +48,8 @@ def get_message_parts(payload: dict[str, Any]) -> dict[str, str | None]:
     return out
 
 
-def get_thread_messages(service: Resource, thread_id: str) -> list[dict[str, Any]]:
-    """Fetch thread and return list of {headers, html, plain} per message."""
+def get_thread_messages(service: Resource, thread_id: str) -> list[Message]:
+    """Fetch thread and return list of Message per message."""
     thread = (
         service.users()
         .threads()
@@ -56,21 +58,21 @@ def get_thread_messages(service: Resource, thread_id: str) -> list[dict[str, Any
     )
     messages = thread.get("messages", [])
 
-    result = []
+    result: list[Message] = []
     for msg in messages:
         payload = msg.get("payload", {})
         headers_list = payload.get("headers", [])
         parts = get_message_parts(payload)
         result.append(
-            {
-                "id": msg.get("id"),
-                "headers": {
-                    "From": _get_header(headers_list, "From"),
-                    "Date": _get_header(headers_list, "Date"),
-                    "Subject": _get_header(headers_list, "Subject"),
-                },
-                "html": parts.get("text/html"),
-                "plain": parts.get("text/plain"),
-            }
+            Message(
+                id=msg.get("id", ""),
+                headers=Headers(
+                    from_addr=_get_header(headers_list, "From"),
+                    date=_get_header(headers_list, "Date"),
+                    subject=_get_header(headers_list, "Subject"),
+                ),
+                html=parts.get("text/html"),
+                plain=parts.get("text/plain"),
+            )
         )
     return result

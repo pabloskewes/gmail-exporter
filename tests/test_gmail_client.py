@@ -93,12 +93,13 @@ def test_get_thread_messages_returns_parsed_messages():
     result = get_thread_messages(service, "thread-123")
 
     assert len(result) == 1
-    assert result[0]["id"] == "msg1"
-    assert result[0]["headers"]["From"] == "alice@test.com"
-    assert result[0]["headers"]["Date"] == "Mon, 1 Jan 2024 12:00:00"
-    assert result[0]["headers"]["Subject"] == "Test"
-    assert result[0]["html"] == "<p>Hello</p>"
-    assert result[0]["plain"] is None
+    msg = result[0]
+    assert msg.id == "msg1"
+    assert msg.headers.from_addr == "alice@test.com"
+    assert msg.headers.date == "Mon, 1 Jan 2024 12:00:00"
+    assert msg.headers.subject == "Test"
+    assert msg.html == "<p>Hello</p>"
+    assert msg.plain is None
 
     mock_get.assert_called_once_with(userId="me", id="thread-123", format="full")
 

@@ -73,20 +73,23 @@ def main(
         for m in messages:
             to_print.append(
                 {
-                    "id": m["id"],
-                    "headers": m["headers"],
-                    "html_len": len(m["html"]) if m.get("html") else 0,
-                    "plain_len": len(m["plain"]) if m.get("plain") else 0,
-                    "html_preview": _truncate(m.get("html")),
-                    "plain_preview": _truncate(m.get("plain")),
+                    "id": m.id,
+                    "headers": {
+                        "From": m.headers.from_addr,
+                        "Date": m.headers.date,
+                        "Subject": m.headers.subject,
+                    },
+                    "html_len": len(m.html) if m.html else 0,
+                    "plain_len": len(m.plain) if m.plain else 0,
+                    "html_preview": _truncate(m.html),
+                    "plain_preview": _truncate(m.plain),
                 }
             )
         print(json.dumps(to_print, indent=2, ensure_ascii=False))
         return
 
     for i, m in enumerate(messages, 1):
-        from_addr = m.get("headers", {}).get("From", "?")
-        print(f"  {i}. {from_addr}")
+        print(f"  {i}. {m.headers.from_addr}")
 
 
 if __name__ == "__main__":
