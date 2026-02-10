@@ -1,8 +1,7 @@
 """OAuth2 authentication for Gmail API.
 
 Handles credential loading, token persistence, and automatic token refresh.
-Uses credentials.json (from Google Cloud Console) and persists token.json
-to avoid re-authentication on each run.
+Uses ~/.config/gmail-exporter/ so the tool works from anywhere.
 """
 
 from pathlib import Path
@@ -13,8 +12,9 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import Resource, build
 
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
-CREDENTIALS_FILE = "credentials.json"
-TOKEN_FILE = "token.json"
+CONFIG_DIR = Path.home() / ".config" / "gmail-exporter"
+CREDENTIALS_FILE = CONFIG_DIR / "credentials.json"
+TOKEN_FILE = CONFIG_DIR / "token.json"
 
 
 def get_gmail_service(
@@ -22,8 +22,7 @@ def get_gmail_service(
 ) -> Resource:
     """Create and return an authenticated Gmail API service.
 
-    Looks for token.json in the working directory. If not found or expired,
-    runs OAuth2 flow via browser and persists new token.
+    Default: ~/.config/gmail-exporter/credentials.json and token.json.
     """
     credentials_path = Path(credentials_path or CREDENTIALS_FILE)
     token_path = Path(token_path or TOKEN_FILE)
@@ -31,7 +30,8 @@ def get_gmail_service(
     if not credentials_path.exists():
         raise FileNotFoundError(
             f"Credentials file not found: {credentials_path}\n"
-            "Download it from Google Cloud Console and place it in the project root."
+            f"Create {CONFIG_DIR} and place credentials.json there.\n"
+            "Download from Google Cloud Console (OAuth 2.0 Desktop app)."
         )
 
     creds = None
@@ -47,7 +47,7 @@ def get_gmail_service(
             )
             creds = flow.run_local_server(port=0)
 
-        with open(token_path, "w") as token:
-            token.write(creds.to_json())
+        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        token_path.write_text(creds.to_json())
 
     return build("gmail", "v1", credentials=creds)
