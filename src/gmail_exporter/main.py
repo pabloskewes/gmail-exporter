@@ -10,6 +10,7 @@ import typer
 
 from gmail_exporter.auth import get_gmail_service
 from gmail_exporter.gmail_client import get_thread_messages
+from gmail_exporter.markdown_writer import save_thread, thread_to_markdown
 from gmail_exporter.parser import extract_message
 
 app = typer.Typer()
@@ -91,7 +92,12 @@ def main(
 
     parsed = [extract_message(m) for m in messages]
     for i, m in enumerate(parsed, 1):
-        print(f"  {i}. {m.from_addr}")
+        print(f"✓ Processing message {i}/{len(parsed)} from {m.from_addr}")
+
+    subject = parsed[0].subject if parsed else "Thread Export"
+    md_content = thread_to_markdown(parsed, subject)
+    out_path = save_thread(md_content, subject, output_dir)
+    print(f"✓ Exported to: {out_path}")
 
 
 if __name__ == "__main__":
