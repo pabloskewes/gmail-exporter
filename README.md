@@ -51,6 +51,10 @@ document.querySelector('[role="main"] [data-legacy-thread-id]').getAttribute('da
 
 On first run, a browser window will open for OAuth authorization. The token is saved to `~/.config/gmail-exporter/token.json` for subsequent runs.
 
+## Debug
+
+`gmail-exporter --debug THREAD_ID` pretty-prints the raw message structure (for development). See `notes/journals/001-init-repo/02-message-structure.md` for documented schema.
+
 ## Output
 
 - One `.md` file per thread, named from the subject (special chars sanitized)
